@@ -3,420 +3,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เกมโอเอ็กซ์ออนไลน์ (Tic-Tac-Toe)</title>
+    <title>Quiz Game Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Kanit', sans-serif;
-            touch-action: manipulation; /* ป้องกันการซูมเมื่อแตะสองครั้งบนมือถือ */
-        }
-        .board-cell {
-            width: 100px;
-            height: 100px;
-            border: 2px solid #374151; /* gray-700 */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 3.5rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            -webkit-tap-highlight-color: transparent; /* ลบไฮไลท์เมื่อแตะบนมือถือ */
-        }
-        .board-cell:hover {
-            background-color: #f3f4f6; /* gray-100 */
-        }
-        .board-cell.x { color: #3b82f6; } /* blue-500 */
-        .board-cell.o { color: #ef4444; } /* red-500 */
-        .winning-cell {
-            background-color: #fef08a; /* yellow-200 */
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        .btn {
-            @apply px-6 py-3 rounded-lg text-white font-semibold shadow-md transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2;
-        }
-        .btn:disabled {
-            @apply opacity-50 cursor-not-allowed;
-        }
-        .btn-primary { @apply bg-blue-500 hover:bg-blue-600 focus:ring-blue-500; }
-        .btn-secondary { @apply bg-green-500 hover:bg-green-600 focus:ring-green-500; }
-        .btn-danger { @apply bg-red-500 hover:bg-red-600 focus:ring-red-500; }
-        #gameIdDisplay {
-            cursor: pointer;
-            background-color: #e5e7eb;
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 2px dashed #9ca3af;
-            transition: background-color 0.2s;
-        }
-        #gameIdDisplay:hover {
-            background-color: #d1d5db;
+        body { font-family: 'Kanit', sans-serif; background-color: #1a202c; color: #e2e8f0; }
+        .btn { @apply w-full px-4 py-3 text-lg font-bold text-white rounded-lg shadow-md transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900; }
+        .btn-primary { @apply bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500; }
+        .btn-secondary { @apply bg-gray-600 hover:bg-gray-700 focus:ring-gray-500; }
+        .btn-correct { @apply bg-green-500 !important; animation: pulse-green 1s infinite; }
+        .btn-wrong { @apply bg-red-500 !important; }
+        .btn-selected { @apply ring-4 ring-yellow-400 ring-offset-2 ring-offset-gray-800; }
+        .card { @apply bg-gray-800 p-6 sm:p-8 rounded-xl shadow-2xl border border-gray-700; }
+        .screen { display: none; }
+        .active-screen { display: flex; }
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 flex flex-col items-center justify-center min-h-screen p-4">
+<body class="flex items-center justify-center min-h-screen p-4">
 
-    <div id="app" class="w-full max-w-md mx-auto text-center">
-        <h1 class="text-4xl font-bold text-gray-700 mb-2">เกมโอเอ็กซ์ออนไลน์</h1>
-        <p class="text-gray-500 mb-6">เล่นกับเพื่อนแบบเรียลไทม์</p>
-
-        <!-- ส่วนเริ่มต้น: สร้างหรือเข้าร่วมเกม -->
-        <div id="startScreen" class="space-y-4">
-            <button id="createGameBtn" class="btn btn-primary w-full">สร้างห้องเกมใหม่</button>
-            <div class="flex items-center space-x-2">
-                <input type="text" id="joinGameIdInput" placeholder="ใส่รหัสห้องเกม" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <button id="joinGameBtn" class="btn btn-secondary">เข้าร่วม</button>
-            </div>
-        </div>
-
-        <!-- ส่วนของเกม -->
-        <div id="gameScreen" class="hidden">
-            <!-- แสดงรหัสห้อง -->
-            <div class="mb-4">
-                <p class="text-sm text-gray-600">รหัสห้อง (ส่งให้เพื่อน):</p>
-                <div id="gameIdDisplay" class="font-mono text-lg font-bold mt-1 inline-block" title="คลิกเพื่อคัดลอก">
-                    <span id="gameIdText"></span>
+    <div id="app-container" class="w-full max-w-2xl mx-auto">
+        <!-- Screen 1: Login -->
+        <div id="login-screen" class="screen active-screen flex-col items-center justify-center">
+            <div class="card w-full text-center">
+                <h1 class="text-4xl font-bold mb-2 text-white">Quiz Challenge</h1>
+                <p class="text-gray-400 mb-6">เกมส์ทายปัญหาประลองความรู้</p>
+                <div class="space-y-4">
+                    <input type="text" id="name-input" placeholder="กรุณากรอกชื่อของคุณ..." class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="game-id-input" placeholder="กรอกรหัสห้องเกมจาก Host..." class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button id="join-btn" class="btn btn-primary">เข้าร่วมเกม</button>
                 </div>
             </div>
-            
-            <!-- แสดงสถานะ -->
-            <div id="status" class="text-xl font-medium mb-4 h-8"></div>
+        </div>
 
-            <!-- กระดานเกม -->
-            <div id="board" class="grid grid-cols-3 w-max mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
-                <!-- Cell 0-8 will be generated by JS -->
+        <!-- Other Screens (Lobby, Question, etc.) -->
+        <div id="lobby-screen" class="screen flex-col items-center justify-center">
+             <div class="card w-full">
+                <h2 class="text-3xl font-bold text-center text-white mb-4">ห้องรอเล่น</h2>
+                <p class="text-center text-gray-400 mb-6">กำลังรอเจ้าของเกม (Host) เริ่มเกม...</p>
+                <div class="bg-gray-900 p-4 rounded-lg mb-6 min-h-[120px]">
+                    <h3 class="font-semibold mb-2 text-indigo-400">ผู้เล่นในห้อง:</h3>
+                    <ul id="player-list" class="list-disc list-inside text-white space-y-1"></ul>
+                </div>
             </div>
-            
-            <!-- ปุ่มเริ่มใหม่ -->
-            <button id="newGameBtn" class="btn btn-danger mt-6 hidden">เริ่มเกมใหม่</button>
+        </div>
+        <div id="question-screen" class="screen flex-col">
+            <div class="card w-full">
+                <h2 id="question-number" class="text-xl font-bold text-indigo-400"></h2>
+                <p id="question-text" class="text-2xl font-semibold text-center text-white min-h-[100px] my-8">...</p>
+                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <p id="wait-for-reveal-msg" class="text-center mt-6 text-yellow-400 hidden">คุณตอบแล้ว! รอ Host เฉลยคำตอบ...</p>
+            </div>
+        </div>
+        <div id="reveal-screen" class="screen flex-col">
+            <div class="card w-full text-center">
+                <p id="reveal-result" class="text-4xl font-bold mb-6"></p>
+                <div id="reveal-options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"></div>
+                <div class="bg-gray-900 p-4 rounded-lg">
+                    <h3 class="font-semibold mb-2 text-indigo-400">ตารางคะแนนปัจจุบัน</h3>
+                    <ul id="reveal-scoreboard" class="space-y-1"></ul>
+                </div>
+            </div>
+        </div>
+        <div id="scoreboard-screen" class="screen flex-col">
+            <div class="card w-full text-center">
+                <h2 class="text-4xl font-bold text-white mb-4">สรุปผลคะแนน</h2>
+                <div id="final-scoreboard" class="space-y-2"></div>
+                <p class="mt-8 text-gray-400">รอ Host เริ่มเกมใหม่อีกครั้ง...</p>
+            </div>
         </div>
     </div>
 
-    <!-- Modal สำหรับข้อความ -->
-    <div id="messageModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm text-center">
-            <p id="modalMessageText" class="text-lg"></p>
-            <button id="closeModalBtn" class="btn btn-primary mt-4">ตกลง</button>
-        </div>
-    </div>
-
-    <!-- Firebase SDK -->
     <script type="module">
-        // นี่คือการตั้งค่า Firebase ที่จำเป็นสำหรับการทำงานของแอป
-        // ในสภาพแวดล้อมจริง จะมีการกำหนดค่าเหล่านี้ให้โดยอัตโนมัติ
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : { apiKey: "AIza...", authDomain: "...", projectId: "...", storageBucket: "...", messagingSenderId: "...", appId: "..." }; // Placeholder
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'tictactoe-default';
-
-        // นำเข้าฟังก์ชันที่จำเป็นจาก Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- ตัวแปรหลัก ---
-        let db, auth;
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "test", authDomain: "test.firebaseapp.com", projectId: "test" };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let gameUnsubscribe = null;
         let currentGameId = null;
-        let currentPlayerSymbol = null;
-        let unsubscribeGameListener = null; // ตัวแปรสำหรับหยุดการฟังข้อมูล
-        let userId = null;
 
-        // --- DOM Elements ---
-        const startScreen = document.getElementById('startScreen');
-        const gameScreen = document.getElementById('gameScreen');
-        const createGameBtn = document.getElementById('createGameBtn');
-        const joinGameIdInput = document.getElementById('joinGameIdInput');
-        const joinGameBtn = document.getElementById('joinGameBtn');
-        const boardElement = document.getElementById('board');
-        const statusElement = document.getElementById('status');
-        const newGameBtn = document.getElementById('newGameBtn');
-        const gameIdText = document.getElementById('gameIdText');
-        const gameIdDisplay = document.getElementById('gameIdDisplay');
-        const messageModal = document.getElementById('messageModal');
-        const modalMessageText = document.getElementById('modalMessageText');
-        const closeModalBtn = document.getElementById('closeModalBtn');
+        const screens = {
+            login: document.getElementById('login-screen'),
+            lobby: document.getElementById('lobby-screen'),
+            question: document.getElementById('question-screen'),
+            reveal: document.getElementById('reveal-screen'),
+            scoreboard: document.getElementById('scoreboard-screen')
+        };
+        const nameInput = document.getElementById('name-input');
+        const gameIdInput = document.getElementById('game-id-input');
+        const joinBtn = document.getElementById('join-btn');
 
-        // --- ฟังก์ชันเริ่มต้น ---
-        async function initialize() {
-            // ปิดการใช้งานปุ่มต่างๆ ชั่วคราวจนกว่าจะยืนยันตัวตนสำเร็จ
-            createGameBtn.disabled = true;
-            joinGameBtn.disabled = true;
-
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                
-                // ติดตามสถานะการยืนยันตัวตน
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        console.log("Authenticated with user ID:", userId);
-                        // เปิดใช้งานปุ่มเมื่อมีผู้ใช้แล้ว
-                        createGameBtn.disabled = false;
-                        joinGameBtn.disabled = false;
-                    }
-                });
-
-                // พยายามเข้าสู่ระบบ
-                // onAuthStateChanged ด้านบนจะจัดการผลลัพธ์
-                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
+        async function main() {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUser = user;
                 } else {
-                    await signInAnonymously(auth);
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Authentication failed:", error);
+                    }
+                }
+            });
+        }
+
+        joinBtn.addEventListener('click', async () => {
+            const name = nameInput.value.trim();
+            const gameId = gameIdInput.value.trim();
+            if (!name || !gameId) {
+                alert('กรุณากรอกชื่อและรหัสห้องเกม');
+                return;
+            }
+            if (!currentUser) {
+                alert('ยังไม่พร้อมเชื่อมต่อ กรุณารอสักครู่');
+                return;
+            }
+
+            joinBtn.disabled = true;
+            joinBtn.textContent = 'กำลังเข้าร่วม...';
+            currentGameId = gameId;
+            
+            await joinGame(name, gameId);
+        });
+
+        async function joinGame(name, gameId) {
+            const gameRef = doc(db, "artifacts", gameId, "public/data/quiz-game", "game-room");
+            try {
+                const gameDoc = await getDoc(gameRef);
+                if (!gameDoc.exists()) {
+                    alert('ไม่พบห้องเกมนี้! กรุณาตรวจสอบรหัสอีกครั้ง');
+                    joinBtn.disabled = false;
+                    joinBtn.textContent = 'เข้าร่วมเกม';
+                    return;
                 }
 
+                const gameData = gameDoc.data();
+                const playerExists = gameData.players.some(p => p.uid === currentUser.uid);
+                if (!playerExists) {
+                    await updateDoc(gameRef, {
+                        players: arrayUnion({ uid: currentUser.uid, name: name, score: 0, answer: null })
+                    });
+                }
+                
+                attachGameListener(gameId);
             } catch (error) {
-                console.error("Firebase sign-in or initialization failed:", error);
-                showMessage("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณารีเฟรชหน้าเว็บ");
+                console.error("Error joining game:", error);
+                alert("เกิดข้อผิดพลาดในการเข้าร่วมเกม");
+                joinBtn.disabled = false;
+                joinBtn.textContent = 'เข้าร่วมเกม';
             }
         }
         
-        // --- ฟังก์ชันจัดการเกม ---
-        const createGame = async () => {
-            if (!userId) {
-                showMessage("กำลังรอการเชื่อมต่อ... กรุณาลองอีกครั้ง");
-                return;
-            }
-            const gameId = generateGameId();
-            const gameRef = doc(db, `artifacts/${appId}/public/data/tictactoe`, gameId);
-            const newGame = {
-                board: Array(9).fill(null),
-                currentPlayer: 'X',
-                players: { 'X': userId, 'O': null },
-                status: 'waiting', // waiting, playing, win, draw
-                winner: null,
-                winningCombo: null,
-                createdAt: new Date(),
-            };
-            await setDoc(gameRef, newGame);
-            currentGameId = gameId;
-            currentPlayerSymbol = 'X';
-            switchToGameScreen();
-            listenToGameUpdates(gameId);
-        };
-
-        const joinGame = async () => {
-            const gameId = joinGameIdInput.value.trim().toUpperCase();
-            if (!gameId) {
-                showMessage("กรุณาใส่รหัสห้องเกม");
-                return;
-            }
-            if (!userId) {
-                showMessage("กำลังรอการเชื่อมต่อ... กรุณาลองอีกครั้ง");
-                return;
-            }
-            
-            const gameRef = doc(db, `artifacts/${appId}/public/data/tictactoe`, gameId);
-            const gameDoc = await getDoc(gameRef);
-
-            if (gameDoc.exists()) {
-                const gameData = gameDoc.data();
-                if (gameData.players.O === null && gameData.players.X !== userId) {
-                    await updateDoc(gameRef, {
-                        'players.O': userId,
-                        status: 'playing'
-                    });
-                    currentGameId = gameId;
-                    currentPlayerSymbol = 'O';
-                    switchToGameScreen();
-                    listenToGameUpdates(gameId);
-                } else if (gameData.players.X === userId || gameData.players.O === userId) {
-                    // ผู้เล่นคนเดิมกลับเข้าร่วม
-                    currentGameId = gameId;
-                    currentPlayerSymbol = gameData.players.X === userId ? 'X' : 'O';
-                    switchToGameScreen();
-                    listenToGameUpdates(gameId);
-                } else {
-                    showMessage("ห้องเกมนี้เต็มแล้ว");
-                }
-            } else {
-                showMessage("ไม่พบห้องเกมนี้");
-            }
-        };
-
-        const listenToGameUpdates = (gameId) => {
-            // หยุดการฟังข้อมูลเก่าก่อน ถ้ามี
-            if (unsubscribeGameListener) {
-                unsubscribeGameListener();
-            }
-            const gameRef = doc(db, `artifacts/${appId}/public/data/tictactoe`, gameId);
-            unsubscribeGameListener = onSnapshot(gameRef, (doc) => {
+        function attachGameListener(gameId) {
+            if (gameUnsubscribe) gameUnsubscribe();
+            const gameRef = doc(db, "artifacts", gameId, "public/data/quiz-game", "game-room");
+            gameUnsubscribe = onSnapshot(gameRef, (doc) => {
                 if (doc.exists()) {
-                    const gameData = doc.data();
-                    updateUI(gameData);
+                    renderGame(doc.data());
                 } else {
-                    // เกมอาจถูกลบไปแล้ว
-                    showMessage("ห้องเกมนี้ถูกปิดแล้ว");
-                    resetToStartScreen();
+                    alert("ห้องเกมถูกปิดแล้ว");
+                    showScreen('login');
+                    gameIdInput.value = '';
+                    joinBtn.disabled = false;
+                    joinBtn.textContent = 'เข้าร่วมเกม';
                 }
             });
-        };
+        }
 
-        const handleCellClick = async (index) => {
-            const gameRef = doc(db, `artifacts/${appId}/public/data/tictactoe`, currentGameId);
-            const gameDoc = await getDoc(gameRef);
-            if (!gameDoc.exists()) return;
-
-            const gameData = gameDoc.data();
-            
-            if (gameData.status !== 'playing' || 
-                gameData.board[index] !== null || 
-                gameData.currentPlayer !== currentPlayerSymbol) {
-                return; // ไม่ใช่ตาของคุณ หรือเกมจบแล้ว หรือช่องไม่ว่าง
+        function renderGame(gameData) {
+            const self = gameData.players.find(p => p.uid === currentUser.uid);
+            if (!self) { 
+                showScreen('login');
+                return; 
             }
 
-            const newBoard = [...gameData.board];
-            newBoard[index] = currentPlayerSymbol;
-
-            const { winner, winningCombo } = checkWinner(newBoard);
+            const { gameState, players, currentQuestionIndex, questions } = gameData;
             
-            const newStatus = winner ? 'win' : (newBoard.every(cell => cell !== null) ? 'draw' : 'playing');
-
-            await updateDoc(gameRef, {
-                board: newBoard,
-                currentPlayer: gameData.currentPlayer === 'X' ? 'O' : 'X',
-                status: newStatus,
-                winner: winner,
-                winningCombo: winningCombo
-            });
-        };
-
-        const checkWinner = (board) => {
-            const winningCombos = [
-                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-                [0, 4, 8], [2, 4, 6]  // Diagonals
-            ];
-            for (const combo of winningCombos) {
-                const [a, b, c] = combo;
-                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-                    return { winner: board[a], winningCombo: combo };
-                }
+            // Shared rendering for lobby
+            const playerList = document.getElementById('player-list');
+            if (playerList) {
+                playerList.innerHTML = players.map(p => `<li class="${p.uid === currentUser.uid ? 'font-bold text-yellow-300' : ''}">${p.name}</li>`).join('');
             }
-            return { winner: null, winningCombo: null };
-        };
-
-        const restartGameInRoom = async () => {
-            if (!currentGameId) return;
-            const gameRef = doc(db, `artifacts/${appId}/public/data/tictactoe`, currentGameId);
-            // รีเซ็ตสถานะเกม แต่ยังคงผู้เล่นและรหัสห้องเดิมไว้
-            await updateDoc(gameRef, {
-                board: Array(9).fill(null),
-                currentPlayer: 'X', // ผู้เล่น X เริ่มก่อนเสมอ
-                status: 'playing',
-                winner: null,
-                winningCombo: null,
-            });
-        };
-
-        // --- ฟังก์ชันจัดการ UI ---
-        const updateUI = (gameData) => {
-            // อัปเดตกระดาน
-            boardElement.innerHTML = '';
-            gameData.board.forEach((cell, index) => {
-                const cellElement = document.createElement('div');
-                cellElement.classList.add('board-cell');
-                if (cell) {
-                    cellElement.textContent = cell;
-                    cellElement.classList.add(cell.toLowerCase());
-                }
-                if (gameData.winningCombo && gameData.winningCombo.includes(index)) {
-                    cellElement.classList.add('winning-cell');
-                }
-                cellElement.addEventListener('click', () => handleCellClick(index));
-                boardElement.appendChild(cellElement);
-            });
-
-            // อัปเดตสถานะ
-            newGameBtn.classList.add('hidden');
-            let statusText = '';
-            if (gameData.status === 'waiting') {
-                statusText = 'รอผู้เล่นคนที่ 2 เข้าร่วม...';
-            } else if (gameData.status === 'playing') {
-                if (gameData.currentPlayer === currentPlayerSymbol) {
-                    statusText = 'ถึงตาคุณแล้ว! (คุณคือ ' + currentPlayerSymbol + ')';
-                } else {
-                    statusText = 'รอ ' + gameData.currentPlayer + ' เดิน...';
-                }
-            } else if (gameData.status === 'win') {
-                statusText = `ผู้เล่น ${gameData.winner} ชนะ!`;
-                newGameBtn.classList.remove('hidden');
-            } else if (gameData.status === 'draw') {
-                statusText = 'เสมอ!';
-                newGameBtn.classList.remove('hidden');
-            }
-            statusElement.textContent = statusText;
             
-            // อัปเดตรหัสห้อง
-            gameIdText.textContent = currentGameId;
-        };
+            switch (gameState) {
+                case 'LOBBY': showScreen('lobby'); break;
+                case 'QUESTION': showScreen('question'); renderQuestion(gameData, self); break;
+                case 'REVEAL': showScreen('reveal'); renderReveal(gameData, self); break;
+                case 'SCOREBOARD': showScreen('scoreboard'); renderScoreboard(players); break;
+            }
+        }
+
+        function showScreen(screenName) {
+            Object.values(screens).forEach(screen => screen.classList.remove('active-screen'));
+            screens[screenName].classList.add('active-screen');
+        }
+
+        function renderQuestion(gameData, self) {
+            const { currentQuestionIndex, questions } = gameData;
+            const question = questions[currentQuestionIndex];
+            
+            document.getElementById('question-number').textContent = `คำถามข้อที่ ${currentQuestionIndex + 1}`;
+            document.getElementById('question-text').textContent = question.question;
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            const hasAnswered = self.answer !== null;
+            document.getElementById('wait-for-reveal-msg').classList.toggle('hidden', !hasAnswered);
+
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('btn', 'btn-secondary');
+                if (hasAnswered) {
+                    button.disabled = true;
+                    if (option === self.answer) button.classList.add('btn-selected');
+                }
+                button.addEventListener('click', () => handleAnswer(option, gameData));
+                optionsContainer.appendChild(button);
+            });
+        }
         
-        const switchToGameScreen = () => {
-            startScreen.classList.add('hidden');
-            gameScreen.classList.remove('hidden');
-        };
+        async function handleAnswer(selectedOption, gameData) {
+            document.querySelectorAll('#options-container button').forEach(b => b.disabled = true);
+            const gameRef = doc(db, "artifacts", currentGameId, "public/data/quiz-game", "game-room");
+            const updatedPlayers = gameData.players.map(p => {
+                if (p.uid === currentUser.uid) return { ...p, answer: selectedOption };
+                return p;
+            });
+            await updateDoc(gameRef, { players: updatedPlayers });
+        }
 
-        const resetToStartScreen = () => {
-            if (unsubscribeGameListener) {
-                unsubscribeGameListener();
-                unsubscribeGameListener = null;
-            }
-            currentGameId = null;
-            currentPlayerSymbol = null;
-            joinGameIdInput.value = '';
-            gameScreen.classList.add('hidden');
-            startScreen.classList.remove('hidden');
-        };
+        function renderReveal(gameData, self) {
+            const { currentQuestionIndex, questions, players } = gameData;
+            const question = questions[currentQuestionIndex];
+            const correctAnswer = question.answer;
+            
+            const revealResult = document.getElementById('reveal-result');
+            revealResult.textContent = self.answer === correctAnswer ? 'ถูกต้อง!' : 'ผิดจ้า!';
+            revealResult.className = `text-4xl font-bold mb-6 ${self.answer === correctAnswer ? 'text-green-400' : 'text-red-400'}`;
 
-        const showMessage = (message) => {
-            modalMessageText.textContent = message;
-            messageModal.classList.remove('hidden');
-        };
+            const optionsContainer = document.getElementById('reveal-options-container');
+            optionsContainer.innerHTML = '';
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('btn', 'btn-secondary');
+                button.disabled = true;
+                if (option === correctAnswer) button.classList.add('btn-correct');
+                else if (option === self.answer) button.classList.add('btn-wrong');
+                optionsContainer.appendChild(button);
+            });
 
-        // --- ฟังก์ชันเสริม ---
-        const generateGameId = () => {
-            return Math.random().toString(36).substring(2, 7).toUpperCase();
-        };
+            const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+            document.getElementById('reveal-scoreboard').innerHTML = sortedPlayers.map(p => 
+                `<li class="flex justify-between ${p.uid === currentUser.uid ? 'font-bold text-yellow-300' : 'text-white'}">
+                    <span>${p.name}</span>
+                    <span>${p.score} คะแนน</span>
+                </li>`
+            ).join('');
+        }
 
-        const copyGameIdToClipboard = () => {
-            if (!currentGameId) return;
-            // ใช้ execCommand เพื่อความเข้ากันได้ที่ดีกว่าใน iFrame
-            const textArea = document.createElement("textarea");
-            textArea.value = currentGameId;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                showMessage(`คัดลอกรหัสห้อง "${currentGameId}" แล้ว!`);
-            } catch (err) {
-                showMessage('ไม่สามารถคัดลอกรหัสได้');
-            }
-            document.body.removeChild(textArea);
-        };
+        function renderScoreboard(players) {
+            const finalScoreboard = document.getElementById('final-scoreboard');
+            const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+            finalScoreboard.innerHTML = sortedPlayers.map((p, index) => {
+                let medal = ['🥇', '🥈', '🥉'][index] || '';
+                return `<div class="flex items-center justify-between p-3 rounded-lg ${index === 0 ? 'bg-yellow-500/20' : 'bg-gray-700'}">
+                            <span class="text-xl font-bold ${p.uid === currentUser.uid ? 'text-yellow-300' : 'text-white'}">${medal} ${p.name}</span>
+                            <span class="text-xl font-bold text-white">${p.score} คะแนน</span>
+                        </div>`;
+            }).join('');
+        }
 
-        // --- Event Listeners ---
-        createGameBtn.addEventListener('click', createGame);
-        joinGameBtn.addEventListener('click', joinGame);
-        newGameBtn.addEventListener('click', () => {
-            // ให้ผู้เล่น X (ผู้สร้างห้อง) เท่านั้นที่สามารถเริ่มเกมใหม่ได้
-            if (currentPlayerSymbol === 'X') {
-                restartGameInRoom(); // แก้ไขให้เรียกใช้ฟังก์ชันเริ่มรอบใหม่
-            } else {
-                showMessage("ต้องให้ผู้สร้างห้อง (X) เริ่มเกมใหม่");
-            }
-        });
-        closeModalBtn.addEventListener('click', () => messageModal.classList.add('hidden'));
-        gameIdDisplay.addEventListener('click', copyGameIdToClipboard);
-
-        // --- เริ่มต้นแอป ---
-        initialize();
+        main();
     </script>
 </body>
 </html>
