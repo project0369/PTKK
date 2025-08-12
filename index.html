@@ -3,237 +3,420 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แจ้งเตือนพลิกตัวคนไข้</title>
+    <title>เกมโอเอ็กซ์ออนไลน์ (Tic-Tac-Toe)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Sarabun', sans-serif;
+            font-family: 'Kanit', sans-serif;
             touch-action: manipulation; /* ป้องกันการซูมเมื่อแตะสองครั้งบนมือถือ */
         }
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            transition: background-color 0.3s ease;
+        .board-cell {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #374151; /* gray-700 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            -webkit-tap-highlight-color: transparent; /* ลบไฮไลท์เมื่อแตะบนมือถือ */
         }
-        .status-inactive { background-color: #f87171; } /* red-400 */
-        .status-active { background-color: #4ade80; } /* green-400 */
-        .btn-shadow {
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        .board-cell:hover {
+            background-color: #f3f4f6; /* gray-100 */
         }
-        .btn-shadow:active {
-            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            transform: translateY(1px);
+        .board-cell.x { color: #3b82f6; } /* blue-500 */
+        .board-cell.o { color: #ef4444; } /* red-500 */
+        .winning-cell {
+            background-color: #fef08a; /* yellow-200 */
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .btn {
+            @apply px-6 py-3 rounded-lg text-white font-semibold shadow-md transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2;
+        }
+        .btn:disabled {
+            @apply opacity-50 cursor-not-allowed;
+        }
+        .btn-primary { @apply bg-blue-500 hover:bg-blue-600 focus:ring-blue-500; }
+        .btn-secondary { @apply bg-green-500 hover:bg-green-600 focus:ring-green-500; }
+        .btn-danger { @apply bg-red-500 hover:bg-red-600 focus:ring-red-500; }
+        #gameIdDisplay {
+            cursor: pointer;
+            background-color: #e5e7eb;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 2px dashed #9ca3af;
+            transition: background-color 0.2s;
+        }
+        #gameIdDisplay:hover {
+            background-color: #d1d5db;
         }
     </style>
 </head>
-<body class="bg-slate-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-50 text-gray-800 flex flex-col items-center justify-center min-h-screen p-4">
 
-    <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 m-4 w-full max-w-md text-center">
-        
-        <!-- Header -->
-        <div class="flex flex-col items-center">
-            <svg class="w-16 h-16 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-            </svg>
-            <h1 class="text-2xl md:text-3xl font-bold text-slate-800">ระบบแจ้งเตือนพลิกตัว</h1>
-            <p class="text-slate-500 mt-2">ตั้งค่าการแจ้งเตือนทุก 2 ชั่วโมง เพื่อป้องกันแผลกดทับ</p>
+    <div id="app" class="w-full max-w-md mx-auto text-center">
+        <h1 class="text-4xl font-bold text-gray-700 mb-2">เกมโอเอ็กซ์ออนไลน์</h1>
+        <p class="text-gray-500 mb-6">เล่นกับเพื่อนแบบเรียลไทม์</p>
+
+        <!-- ส่วนเริ่มต้น: สร้างหรือเข้าร่วมเกม -->
+        <div id="startScreen" class="space-y-4">
+            <button id="createGameBtn" class="btn btn-primary w-full">สร้างห้องเกมใหม่</button>
+            <div class="flex items-center space-x-2">
+                <input type="text" id="joinGameIdInput" placeholder="ใส่รหัสห้องเกม" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <button id="joinGameBtn" class="btn btn-secondary">เข้าร่วม</button>
+            </div>
         </div>
 
-        <!-- Status -->
-        <div class="mt-8 bg-slate-50 rounded-lg p-4 flex items-center justify-center space-x-3">
-            <span id="status-dot" class="status-dot status-inactive"></span>
-            <span id="status-text" class="text-slate-700 font-semibold">สถานะ: ปิดใช้งาน</span>
-        </div>
-        
-        <!-- Action Button -->
-        <div class="mt-8">
-            <button id="toggleButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 btn-shadow focus:outline-none focus:ring-2 focus:ring-blue-400">
-                เริ่มการแจ้งเตือน
-            </button>
-        </div>
+        <!-- ส่วนของเกม -->
+        <div id="gameScreen" class="hidden">
+            <!-- แสดงรหัสห้อง -->
+            <div class="mb-4">
+                <p class="text-sm text-gray-600">รหัสห้อง (ส่งให้เพื่อน):</p>
+                <div id="gameIdDisplay" class="font-mono text-lg font-bold mt-1 inline-block" title="คลิกเพื่อคัดลอก">
+                    <span id="gameIdText"></span>
+                </div>
+            </div>
+            
+            <!-- แสดงสถานะ -->
+            <div id="status" class="text-xl font-medium mb-4 h-8"></div>
 
-        <!-- Info -->
-        <div class="mt-6 text-xs text-slate-400">
-            <p>แอปจะทำงานเบื้องหลังและแจ้งเตือนแม้ปิดเบราว์เซอร์ไปแล้ว</p>
+            <!-- กระดานเกม -->
+            <div id="board" class="grid grid-cols-3 w-max mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+                <!-- Cell 0-8 will be generated by JS -->
+            </div>
+            
+            <!-- ปุ่มเริ่มใหม่ -->
+            <button id="newGameBtn" class="btn btn-danger mt-6 hidden">เริ่มเกมใหม่</button>
         </div>
-
     </div>
 
-    <!-- Service Worker and Main Logic -->
-    <script>
-        const toggleButton = document.getElementById('toggleButton');
-        const statusText = document.getElementById('status-text');
-        const statusDot = document.getElementById('status-dot');
-        let isReminderActive = false;
+    <!-- Modal สำหรับข้อความ -->
+    <div id="messageModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm text-center">
+            <p id="modalMessageText" class="text-lg"></p>
+            <button id="closeModalBtn" class="btn btn-primary mt-4">ตกลง</button>
+        </div>
+    </div>
 
-        // ตรวจสอบว่าเบราว์เซอร์รองรับ Service Worker และ Notifications หรือไม่
-        if (!('serviceWorker' in navigator) || !('Notification' in window)) {
-            alert('ขออภัย เบราว์เซอร์ของคุณไม่รองรับฟังก์ชันการแจ้งเตือนเบื้องหลัง');
-            toggleButton.disabled = true;
-            toggleButton.textContent = 'ไม่รองรับ';
-        }
+    <!-- Firebase SDK -->
+    <script type="module">
+        // นี่คือการตั้งค่า Firebase ที่จำเป็นสำหรับการทำงานของแอป
+        // ในสภาพแวดล้อมจริง จะมีการกำหนดค่าเหล่านี้ให้โดยอัตโนมัติ
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : { apiKey: "AIza...", authDomain: "...", projectId: "...", storageBucket: "...", messagingSenderId: "...", appId: "..." }; // Placeholder
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'tictactoe-default';
 
-        // ฟังก์ชันอัปเดต UI
-        function updateUI(isActive) {
-            isReminderActive = isActive;
-            if (isActive) {
-                statusText.textContent = 'สถานะ: ทำงานอยู่';
-                statusDot.classList.remove('status-inactive');
-                statusDot.classList.add('status-active');
-                toggleButton.textContent = 'หยุดการแจ้งเตือน';
-                toggleButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                toggleButton.classList.add('bg-red-500', 'hover:bg-red-600');
-            } else {
-                statusText.textContent = 'สถานะ: ปิดใช้งาน';
-                statusDot.classList.remove('status-active');
-                statusDot.classList.add('status-inactive');
-                toggleButton.textContent = 'เริ่มการแจ้งเตือน';
-                toggleButton.classList.remove('bg-red-500', 'hover:bg-red-600');
-                toggleButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
+        // นำเข้าฟังก์ชันที่จำเป็นจาก Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // --- ตัวแปรหลัก ---
+        let db, auth;
+        let currentGameId = null;
+        let currentPlayerSymbol = null;
+        let unsubscribeGameListener = null; // ตัวแปรสำหรับหยุดการฟังข้อมูล
+        let userId = null;
+
+        // --- DOM Elements ---
+        const startScreen = document.getElementById('startScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const createGameBtn = document.getElementById('createGameBtn');
+        const joinGameIdInput = document.getElementById('joinGameIdInput');
+        const joinGameBtn = document.getElementById('joinGameBtn');
+        const boardElement = document.getElementById('board');
+        const statusElement = document.getElementById('status');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const gameIdText = document.getElementById('gameIdText');
+        const gameIdDisplay = document.getElementById('gameIdDisplay');
+        const messageModal = document.getElementById('messageModal');
+        const modalMessageText = document.getElementById('modalMessageText');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+
+        // --- ฟังก์ชันเริ่มต้น ---
+        async function initialize() {
+            // ปิดการใช้งานปุ่มต่างๆ ชั่วคราวจนกว่าจะยืนยันตัวตนสำเร็จ
+            createGameBtn.disabled = true;
+            joinGameBtn.disabled = true;
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // ติดตามสถานะการยืนยันตัวตน
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("Authenticated with user ID:", userId);
+                        // เปิดใช้งานปุ่มเมื่อมีผู้ใช้แล้ว
+                        createGameBtn.disabled = false;
+                        joinGameBtn.disabled = false;
+                    }
+                });
+
+                // พยายามเข้าสู่ระบบ
+                // onAuthStateChanged ด้านบนจะจัดการผลลัพธ์
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+            } catch (error) {
+                console.error("Firebase sign-in or initialization failed:", error);
+                showMessage("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณารีเฟรชหน้าเว็บ");
             }
         }
-
-        // ฟังก์ชันเริ่มการแจ้งเตือน
-        async function startReminder() {
-            // 1. ขออนุญาตแสดง Notification
-            const permission = await Notification.requestPermission();
-            if (permission !== 'granted') {
-                alert('คุณต้องอนุญาตการแจ้งเตือนเพื่อใช้งานฟังก์ชันนี้');
+        
+        // --- ฟังก์ชันจัดการเกม ---
+        const createGame = async () => {
+            if (!userId) {
+                showMessage("กำลังรอการเชื่อมต่อ... กรุณาลองอีกครั้ง");
                 return;
             }
+            const gameId = generateGameId();
+            const gameRef = doc(db, `artifacts/${appId}/public/data/tictactoe`, gameId);
+            const newGame = {
+                board: Array(9).fill(null),
+                currentPlayer: 'X',
+                players: { 'X': userId, 'O': null },
+                status: 'waiting', // waiting, playing, win, draw
+                winner: null,
+                winningCombo: null,
+                createdAt: new Date(),
+            };
+            await setDoc(gameRef, newGame);
+            currentGameId = gameId;
+            currentPlayerSymbol = 'X';
+            switchToGameScreen();
+            listenToGameUpdates(gameId);
+        };
 
-            // 2. ลงทะเบียน Service Worker
-            try {
-                const registration = await navigator.serviceWorker.register('sw.js');
-                console.log('Service Worker registered:', registration);
-
-                // รอให้ worker พร้อมทำงาน
-                await navigator.serviceWorker.ready;
-                
-                // 3. ส่งคำสั่ง 'START' ไปยัง Service Worker
-                navigator.serviceWorker.controller.postMessage({ action: 'START' });
-                console.log('Sent START command to Service Worker.');
-                updateUI(true);
-
-            } catch (error) {
-                console.error('Service Worker registration failed:', error);
-                alert('เกิดข้อผิดพลาดในการเริ่มระบบแจ้งเตือน');
+        const joinGame = async () => {
+            const gameId = joinGameIdInput.value.trim().toUpperCase();
+            if (!gameId) {
+                showMessage("กรุณาใส่รหัสห้องเกม");
+                return;
             }
-        }
+            if (!userId) {
+                showMessage("กำลังรอการเชื่อมต่อ... กรุณาลองอีกครั้ง");
+                return;
+            }
+            
+            const gameRef = doc(db, `artifacts/${appId}/public/data/tictactoe`, gameId);
+            const gameDoc = await getDoc(gameRef);
 
-        // ฟังก์ชันหยุดการแจ้งเตือน
-        async function stopReminder() {
-            try {
-                const registration = await navigator.serviceWorker.getRegistration();
-                if (registration) {
-                    // ส่งคำสั่ง 'STOP' ไปยัง Service Worker
-                    if (navigator.serviceWorker.controller) {
-                       navigator.serviceWorker.controller.postMessage({ action: 'STOP' });
-                       console.log('Sent STOP command to Service Worker.');
-                    }
-                    // ยกเลิกการลงทะเบียน Service Worker
-                    await registration.unregister();
-                    console.log('Service Worker unregistered.');
+            if (gameDoc.exists()) {
+                const gameData = gameDoc.data();
+                if (gameData.players.O === null && gameData.players.X !== userId) {
+                    await updateDoc(gameRef, {
+                        'players.O': userId,
+                        status: 'playing'
+                    });
+                    currentGameId = gameId;
+                    currentPlayerSymbol = 'O';
+                    switchToGameScreen();
+                    listenToGameUpdates(gameId);
+                } else if (gameData.players.X === userId || gameData.players.O === userId) {
+                    // ผู้เล่นคนเดิมกลับเข้าร่วม
+                    currentGameId = gameId;
+                    currentPlayerSymbol = gameData.players.X === userId ? 'X' : 'O';
+                    switchToGameScreen();
+                    listenToGameUpdates(gameId);
+                } else {
+                    showMessage("ห้องเกมนี้เต็มแล้ว");
                 }
-                updateUI(false);
-            } catch (error) {
-                console.error('Failed to stop reminder:', error);
-                alert('เกิดข้อผิดพลาดในการหยุดระบบแจ้งเตือน');
-            }
-        }
-
-        // จัดการการคลิกปุ่ม
-        toggleButton.addEventListener('click', () => {
-            if (isReminderActive) {
-                stopReminder();
             } else {
-                startReminder();
+                showMessage("ไม่พบห้องเกมนี้");
+            }
+        };
+
+        const listenToGameUpdates = (gameId) => {
+            // หยุดการฟังข้อมูลเก่าก่อน ถ้ามี
+            if (unsubscribeGameListener) {
+                unsubscribeGameListener();
+            }
+            const gameRef = doc(db, `artifacts/${appId}/public/data/tictactoe`, gameId);
+            unsubscribeGameListener = onSnapshot(gameRef, (doc) => {
+                if (doc.exists()) {
+                    const gameData = doc.data();
+                    updateUI(gameData);
+                } else {
+                    // เกมอาจถูกลบไปแล้ว
+                    showMessage("ห้องเกมนี้ถูกปิดแล้ว");
+                    resetToStartScreen();
+                }
+            });
+        };
+
+        const handleCellClick = async (index) => {
+            const gameRef = doc(db, `artifacts/${appId}/public/data/tictactoe`, currentGameId);
+            const gameDoc = await getDoc(gameRef);
+            if (!gameDoc.exists()) return;
+
+            const gameData = gameDoc.data();
+            
+            if (gameData.status !== 'playing' || 
+                gameData.board[index] !== null || 
+                gameData.currentPlayer !== currentPlayerSymbol) {
+                return; // ไม่ใช่ตาของคุณ หรือเกมจบแล้ว หรือช่องไม่ว่าง
+            }
+
+            const newBoard = [...gameData.board];
+            newBoard[index] = currentPlayerSymbol;
+
+            const { winner, winningCombo } = checkWinner(newBoard);
+            
+            const newStatus = winner ? 'win' : (newBoard.every(cell => cell !== null) ? 'draw' : 'playing');
+
+            await updateDoc(gameRef, {
+                board: newBoard,
+                currentPlayer: gameData.currentPlayer === 'X' ? 'O' : 'X',
+                status: newStatus,
+                winner: winner,
+                winningCombo: winningCombo
+            });
+        };
+
+        const checkWinner = (board) => {
+            const winningCombos = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+                [0, 4, 8], [2, 4, 6]  // Diagonals
+            ];
+            for (const combo of winningCombos) {
+                const [a, b, c] = combo;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    return { winner: board[a], winningCombo: combo };
+                }
+            }
+            return { winner: null, winningCombo: null };
+        };
+
+        const restartGameInRoom = async () => {
+            if (!currentGameId) return;
+            const gameRef = doc(db, `artifacts/${appId}/public/data/tictactoe`, currentGameId);
+            // รีเซ็ตสถานะเกม แต่ยังคงผู้เล่นและรหัสห้องเดิมไว้
+            await updateDoc(gameRef, {
+                board: Array(9).fill(null),
+                currentPlayer: 'X', // ผู้เล่น X เริ่มก่อนเสมอ
+                status: 'playing',
+                winner: null,
+                winningCombo: null,
+            });
+        };
+
+        // --- ฟังก์ชันจัดการ UI ---
+        const updateUI = (gameData) => {
+            // อัปเดตกระดาน
+            boardElement.innerHTML = '';
+            gameData.board.forEach((cell, index) => {
+                const cellElement = document.createElement('div');
+                cellElement.classList.add('board-cell');
+                if (cell) {
+                    cellElement.textContent = cell;
+                    cellElement.classList.add(cell.toLowerCase());
+                }
+                if (gameData.winningCombo && gameData.winningCombo.includes(index)) {
+                    cellElement.classList.add('winning-cell');
+                }
+                cellElement.addEventListener('click', () => handleCellClick(index));
+                boardElement.appendChild(cellElement);
+            });
+
+            // อัปเดตสถานะ
+            newGameBtn.classList.add('hidden');
+            let statusText = '';
+            if (gameData.status === 'waiting') {
+                statusText = 'รอผู้เล่นคนที่ 2 เข้าร่วม...';
+            } else if (gameData.status === 'playing') {
+                if (gameData.currentPlayer === currentPlayerSymbol) {
+                    statusText = 'ถึงตาคุณแล้ว! (คุณคือ ' + currentPlayerSymbol + ')';
+                } else {
+                    statusText = 'รอ ' + gameData.currentPlayer + ' เดิน...';
+                }
+            } else if (gameData.status === 'win') {
+                statusText = `ผู้เล่น ${gameData.winner} ชนะ!`;
+                newGameBtn.classList.remove('hidden');
+            } else if (gameData.status === 'draw') {
+                statusText = 'เสมอ!';
+                newGameBtn.classList.remove('hidden');
+            }
+            statusElement.textContent = statusText;
+            
+            // อัปเดตรหัสห้อง
+            gameIdText.textContent = currentGameId;
+        };
+        
+        const switchToGameScreen = () => {
+            startScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+        };
+
+        const resetToStartScreen = () => {
+            if (unsubscribeGameListener) {
+                unsubscribeGameListener();
+                unsubscribeGameListener = null;
+            }
+            currentGameId = null;
+            currentPlayerSymbol = null;
+            joinGameIdInput.value = '';
+            gameScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        };
+
+        const showMessage = (message) => {
+            modalMessageText.textContent = message;
+            messageModal.classList.remove('hidden');
+        };
+
+        // --- ฟังก์ชันเสริม ---
+        const generateGameId = () => {
+            return Math.random().toString(36).substring(2, 7).toUpperCase();
+        };
+
+        const copyGameIdToClipboard = () => {
+            if (!currentGameId) return;
+            // ใช้ execCommand เพื่อความเข้ากันได้ที่ดีกว่าใน iFrame
+            const textArea = document.createElement("textarea");
+            textArea.value = currentGameId;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showMessage(`คัดลอกรหัสห้อง "${currentGameId}" แล้ว!`);
+            } catch (err) {
+                showMessage('ไม่สามารถคัดลอกรหัสได้');
+            }
+            document.body.removeChild(textArea);
+        };
+
+        // --- Event Listeners ---
+        createGameBtn.addEventListener('click', createGame);
+        joinGameBtn.addEventListener('click', joinGame);
+        newGameBtn.addEventListener('click', () => {
+            // ให้ผู้เล่น X (ผู้สร้างห้อง) เท่านั้นที่สามารถเริ่มเกมใหม่ได้
+            if (currentPlayerSymbol === 'X') {
+                restartGameInRoom(); // แก้ไขให้เรียกใช้ฟังก์ชันเริ่มรอบใหม่
+            } else {
+                showMessage("ต้องให้ผู้สร้างห้อง (X) เริ่มเกมใหม่");
             }
         });
+        closeModalBtn.addEventListener('click', () => messageModal.classList.add('hidden'));
+        gameIdDisplay.addEventListener('click', copyGameIdToClipboard);
 
-        // ตรวจสอบสถานะเมื่อโหลดหน้าเว็บ
-        async function checkInitialState() {
-            const registration = await navigator.serviceWorker.getRegistration();
-            if (registration && registration.active) {
-                 // หากมี Service Worker ทำงานอยู่ ให้ถือว่าเปิดใช้งานแล้ว
-                 // หมายเหตุ: เราไม่สามารถรู้ได้แน่ชัดว่า interval ทำงานอยู่หรือไม่
-                 // แต่เราจะตั้งค่า UI ให้สอดคล้องกับการมีอยู่ของ worker
-                 updateUI(true);
-            } else {
-                 updateUI(false);
-            }
-        }
-
-        window.addEventListener('load', checkInitialState);
+        // --- เริ่มต้นแอป ---
+        initialize();
     </script>
-    
-    <!-- This is the Service Worker file. In a real project, this would be in a separate file named sw.js -->
-    <script>
-        const serviceWorkerCode = `
-            let intervalId = null;
-            const TWO_HOURS = 2 * 60 * 60 * 1000; // 2 ชั่วโมงในหน่วยมิลลิวินาที
-
-            function showNotification() {
-                console.log('Showing notification at', new Date().toLocaleTimeString());
-                self.registration.showNotification('พลิกตัวคนไข้', {
-                    body: 'ได้เวลาพลิกตัวผู้ป่วยเพื่อป้องกันแผลกดทับ',
-                    icon: 'https://placehold.co/192x192/3b82f6/ffffff?text=+', // ไอคอนรูปบวก
-                    vibrate: [200, 100, 200], // สั่น
-                    tag: 'patient-turn-reminder' // ใช้ tag เพื่อให้แจ้งเตือนใหม่ทับอันเก่า
-                });
-            }
-
-            self.addEventListener('message', (event) => {
-                if (event.data.action === 'START') {
-                    console.log('Service Worker received START command.');
-                    // เคลียร์ interval เก่า (ถ้ามี)
-                    if (intervalId) {
-                        clearInterval(intervalId);
-                    }
-                    // แสดงแจ้งเตือนทันทีครั้งแรก เพื่อให้ผู้ใช้รู้ว่าระบบเริ่มทำงานแล้ว
-                    showNotification();
-                    // ตั้งค่า interval ให้ทำงานทุก 2 ชั่วโมง
-                    intervalId = setInterval(showNotification, TWO_HOURS);
-                } else if (event.data.action === 'STOP') {
-                    console.log('Service Worker received STOP command.');
-                    if (intervalId) {
-                        clearInterval(intervalId);
-                        intervalId = null;
-                        console.log('Interval cleared.');
-                    }
-                }
-            });
-
-            // ทำให้ service worker ทำงานทันทีที่ลงทะเบียนเสร็จ
-            self.addEventListener('install', (event) => {
-                self.skipWaiting();
-            });
-
-            self.addEventListener('activate', (event) => {
-                console.log('Service Worker activated.');
-                // ควบคุมหน้าเว็บทันที
-                event.waitUntil(self.clients.claim());
-            });
-        `;
-        // Register the service worker from a blob URL
-        const blob = new Blob([serviceWorkerCode], { type: 'application/javascript' });
-        const swUrl = URL.createObjectURL(blob);
-        // The registration logic is in the main script block above.
-        // We just need to modify the registration call to use this URL.
-        // This is a workaround for single-file deployment.
-        // In a real project, sw.js would be a separate file.
-        // Let's modify the main script to use this blob URL.
-        const originalRegister = navigator.serviceWorker.register;
-        navigator.serviceWorker.register = (scriptURL, options) => {
-            if (scriptURL === 'sw.js') {
-                return originalRegister(swUrl, options);
-            }
-            return originalRegister(scriptURL, options);
-        };
-    </script>
-
 </body>
 </html>
